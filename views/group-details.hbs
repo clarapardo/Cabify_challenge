@@ -1,0 +1,18 @@
+<div class="container">
+
+    <h1>holi</h1>
+
+    {{#each finalGroupes}}
+
+    <h5>LEADER: {{leader.name}}</h5>
+
+    <h5>EATERS:</h5>
+    {{#each eaters}}
+    <h5>{{name}}</h5>
+    {{/each}}
+
+    <h5>RESTAURANT: {{restaurant.name}}</h5>
+    <hr>
+
+    {{/each}}
+</div>

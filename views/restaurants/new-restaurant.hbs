@@ -1,0 +1,23 @@
+
+
+<div class="container">
+
+    <h1 >add a new restaurant</h1>
+    <hr>
+
+    <form action="/restaurants" method="POST">
+
+        <div>
+            <div>
+                <input type="text" class="form-control" id="name" name="name" placeholder="Name" value="{{name}}">
+            </div>
+            <div>
+                <input type="text" class="form-control" id="adress" name="adress" placeholder="Adress" value="{{adress}}">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">ugh yummy!</button>
+    </form>
+    <button class="btn btn-dark"><a href="/restaurants">Cancelar</a></button>
+
+</div>

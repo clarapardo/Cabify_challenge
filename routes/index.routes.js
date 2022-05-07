@@ -1,8 +1,12 @@
-const router = require("express").Router();
+const router = require("express").Router()
 
-/* GET home page */
+// ---------> HOME PAGE >---------
 router.get("/", (req, res, next) => {
-  res.render("index");
-});
+  res.render("index")
+})
 
-module.exports = router;
+// ---------> ROUTES <---------
+router.use("/", require ('./eatApp.routes'))
+
+
+module.exports = router
