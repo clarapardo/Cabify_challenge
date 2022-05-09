@@ -2,13 +2,11 @@ const { Schema, model } = require("mongoose")
 
 const groupSchema = new Schema(
     {
-        leader: String,
-        eaters: [String],
-        restaurant: String
+        subgroups: [Array]
     },
     {
         timestamps: true,
     }
 )
 
-module.exports = model("Group", groupSchema)
+module.exports = model("group", groupSchema)
