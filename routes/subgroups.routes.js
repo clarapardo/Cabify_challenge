@@ -13,14 +13,14 @@ router.post("/create_groups", (req, res, next) => {
         Subgroups.find()
     ]
 
-    let promiseVerifications = Promise
+    Promise
         .all(promises)
         .then(([allEaters, allRestaurants, allSubgroups]) => {
 
             // // 0. Check if the group has been set before
             if (allSubgroups.length !== 0) {
-                let allTimeSubroups = JSON.parse(JSON.stringify(allSubgroups))
-                let lastSubgroup = allTimeSubroups.pop()
+                let allTimeSubgroups = JSON.parse(JSON.stringify(allSubgroups))
+                let lastSubgroup = allTimeSubgroups.pop()
 
                 let matchingInput = allEaters.filter(eater => eater._id.toString() === lastSubgroup.leader._id)
 
@@ -124,19 +124,15 @@ router.post("/create_groups", (req, res, next) => {
                 subgroupSetting = []
             }
 
-            console.log(finalSubgroups)
+            // console.log(finalSubgroups)
             return finalSubgroups
 
         })
-        .then(finalSubgroups => Subgroups.create({ finalSubgroups }))
-        .then(subgroups => {
+        .then(finalSubgroups => {
 
-            // Group
-            //     .create({ subgroups })
-            //     .then(group => res.status(200).json(group))
-            //     .catch(err => console.log(err))
-
-            res.status(200).json(subgroups)
+            Subgroups.create(finalSubgroups)
+            Group.create({ subgroups: finalSubgroups })
+            res.status(200).json(finalSubgroups)
         })
         .catch(err => console.log(err))
 })

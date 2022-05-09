@@ -2,7 +2,7 @@ const { Schema, model } = require("mongoose")
 
 const groupSchema = new Schema(
     {
-        subgroups: [Array]
+        subgroups: Array
     },
     {
         timestamps: true,
