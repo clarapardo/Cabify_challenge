@@ -19,7 +19,7 @@ router.use("/restaurants", require('./restaurants.routes'))
 router.use("/", require('./subgroups.routes'))
 
 // ---------> GROUP ROUTES <---------
-router.use("/", require('./groups.routes'))
+// router.use("/", require('./groups.routes'))
 
 
 module.exports = router
