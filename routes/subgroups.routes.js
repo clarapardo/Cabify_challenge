@@ -7,6 +7,7 @@ const Group = require('./../models/Group.models')
 
 router.post("/create_groups", (req, res, next) => {
 
+    var aux
     const promises = [
         Eater.find(),
         Restaurant.find(),
@@ -17,10 +18,10 @@ router.post("/create_groups", (req, res, next) => {
         .all(promises)
         .then(([allEaters, allRestaurants, allSubgroups]) => {
 
-            // // 0. Check if the group has been set before
+            // // 0. Check if the subgroups has been set before
             if (allSubgroups.length !== 0) {
-                let allTimeSubgroups = JSON.parse(JSON.stringify(allSubgroups))
-                let lastSubgroup = allTimeSubgroups.pop()
+                let allSubgroupsCopy = JSON.parse(JSON.stringify(allSubgroups))
+                let lastSubgroup = allSubgroupsCopy.pop()
 
                 let matchingInput = allEaters.filter(eater => eater._id.toString() === lastSubgroup.leader._id)
 
@@ -87,7 +88,6 @@ router.post("/create_groups", (req, res, next) => {
 
                     allSubgroups.push(groupMembers)
                     groupMembers = []
-
                 }
             }
 
@@ -124,7 +124,6 @@ router.post("/create_groups", (req, res, next) => {
                 subgroupSetting = []
             }
 
-            // console.log(finalSubgroups)
             return finalSubgroups
 
         })
@@ -132,43 +131,11 @@ router.post("/create_groups", (req, res, next) => {
 
             Subgroups.create(finalSubgroups)
             Group.create({ subgroups: finalSubgroups })
+
             res.status(200).json(finalSubgroups)
         })
-        .catch(err => console.log(err))
+        .catch(err => res.status(500).json(err))
 })
-
-
-// router.get("/groups", (req, res, next) => {
-
-//     const promises = [
-//         Eater.find(),
-//         Restaurant.find(),
-//         Groups.find()
-//     ]
-
-//     Promise
-//         .all(promises)
-//         .then(([allEaters, allRestaurants, allGroups]) => {
-
-//             if (allGroups.length === 0) {
-//                 throw ({ message: 'group not created yet' })
-//             } else {
-
-//                 let allTimeRestaurants = JSON.parse(JSON.stringify(allGroups))
-//                 let lastGroup = allTimeRestaurants.pop()
-
-//                 let matchingInput = allEaters.filter(eater => eater._id.toString() === lastGroup.leader._id)
-
-//                 if (matchingInput.length === 0) {
-//                     throw ({ message: 'group not created yet' })
-//                 } else {
-//                     res.json(allGroups) //FILTRAR POR FECHA¿?
-//                 }
-//             }
-
-//         })
-//         .catch(err => res.status(500).json(err))
-// })
 
 
 
