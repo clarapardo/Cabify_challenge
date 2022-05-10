@@ -3,9 +3,8 @@ const Eater = require('./../models/Eater.model')
 const Restaurant = require('./../models/Restaurant.model')
 
 
-
 // ----- 1. All eaters
-router.get("/", (req, res, next) => {
+router.get("/", (req, res) => {
 
     Eater
         .find()
@@ -15,14 +14,13 @@ router.get("/", (req, res, next) => {
 
 
 // ----- 2. New eater
-router.get("/add-new", (req, res, next) => {
-
-    res.render('eaters/new-eater')
-})
-
-router.post("/", (req, res, next) => {
+router.post("/", (req, res) => {
 
     const { name, email } = req.body
+
+    if (name.length === 0 || email.length === 0) {
+        throw res.status(500).json({ message: 'please fill all the inputs' })
+    }
 
     Eater
         .findOne({ email })
@@ -35,16 +33,14 @@ router.post("/", (req, res, next) => {
                     .then(() => res.status(200).json())
                     .catch(err => res.status(500).json(err))
             } else {
-                res.json({ message: 'email already registered' })
+                res.status(500).json({ message: 'email already added' })
             }
         })
         .catch(err => res.status(500).json(err))
 })
 
 
-
-
-// ---------> REMOVE ALL RECORDS <---------
+// ----- 3. Remove all records: eaters + restaurants
 router.delete('/', (req, res) => {
 
     const promises = [
@@ -57,7 +53,6 @@ router.delete('/', (req, res) => {
         .then(() => res.status(200).json({ message: 'eaters and restaurants removed' }))
         .catch(err => res.status(500).json(err))
 })
-
 
 
 module.exports = router

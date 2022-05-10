@@ -1,7 +1,7 @@
-function generateRandom(remainingEaters, groupMembers) {
-    let randomNum = Math.floor(Math.random() * (remainingEaters.length - 1))
-    groupMembers.push(remainingEaters[randomNum])
-    remainingEaters.splice(randomNum, 1)
+function generateRandom(originalCollection, newCollection) {
+    let randomNum = Math.floor(Math.random() * (originalCollection.length - 1))
+    newCollection.push(originalCollection[randomNum])
+    originalCollection.splice(randomNum, 1)
 }
 
 module.exports = generateRandom

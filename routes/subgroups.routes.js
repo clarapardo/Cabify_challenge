@@ -1,75 +1,148 @@
 const router = require("express").Router()
 const Eater = require('../models/Eater.model')
 const Restaurant = require('../models/Restaurant.model')
-const Group = require('../models/Group.model')
-// const Group = require('./../models/Group.models')
+const Subgroups = require('../models/Subgroup.model')
+const Group = require('./../models/Group.models')
+
+const generateRandom = require('./../utils/generateRandom')
+const notLeaderAgain = require('./../utils/notLeaderAgain')
 
 
-router.post("/create_groups", (req, res, next) => {
+// ----- 1. Create all the subgroups
+router.post("/create_groups", (req, res) => {
 
-    var aux
     const promises = [
         Eater.find(),
         Restaurant.find(),
-        Group.find()
+        Subgroups.find()
     ]
 
     Promise
         .all(promises)
         .then(([allEaters, allRestaurants, allSubgroups]) => {
 
-            let numberOfSubgroups
-            numberOfSubgroups = Math.ceil(allEaters.length / 7)
+            // ----- 1.1. Check if the subgroups had been set before
+            if (allSubgroups.length !== 0) {
+                let allSubgroupsCopy = JSON.parse(JSON.stringify(allSubgroups))
+                let lastSubgroup = allSubgroupsCopy.pop()
 
-            let allInfo = { numberOfSubgroups, allEaters, allRestaurants }
-            return allInfo
+                let matchingInput = allEaters.filter(eater => eater._id.toString() === lastSubgroup.leader._id)
+
+                if (matchingInput.length === 1) {
+                    throw res.status(500).json({ message: 'groups already created' })
+                }
+            }
+
+            let numberOfSubgroups
+
+            for (i = 7; i >= 0; i--) {
+
+                numberOfSubgroups = Math.ceil(allEaters.length / i)
+
+                if (allEaters.length % i === 0 || i * numberOfSubgroups >= allEaters.length && allEaters.length > 1 * i + (numberOfSubgroups - 1) * (i - 1)) {
+
+                    let allInfo = { numberOfSubgroups, maxPeoplePerGroup: i, allEaters, allRestaurants }
+                    return allInfo
+                }
+            }
         })
-        .then(({ numberOfSubgroups, allEaters, allRestaurants }) => {
+        .then(({ numberOfSubgroups, maxPeoplePerGroup, allEaters, allRestaurants }) => {
 
             // Deep copy of allEaters + allResstaurants
             let remainingEaters = JSON.parse(JSON.stringify(allEaters))
             let remainingRestaurants = JSON.parse(JSON.stringify(allRestaurants))
 
 
-            // // 1. Subgroups setting
+            // ----- 1.2. Subgroups setting
             let groupMembers = []
             let allSubgroups = []
 
-            groupMembers[0] = ['hola']
-            groupMembers[1] = ['hola']
+            while (remainingEaters.length > 0) {
 
-            console.log(groupMembers)
+                if (allEaters.length % maxPeoplePerGroup === 0) {     // Grupos con el mismo número de personas
+                    for (i = 0; i < maxPeoplePerGroup; i++) {
+                        generateRandom(remainingEaters, groupMembers)
+                    }
 
+                    allSubgroups.push(groupMembers)
+                    groupMembers = []
 
-            var jump = 0
-            while (remainingEaters.length !== 0) {
+                } else if (remainingEaters.length % (maxPeoplePerGroup - 1) === 0) {     // Grupos de -1 miembro
 
-                for (i = 0; i < numberOfSubgroups; i++) {
-                    let randomNum = Math.floor(Math.random() * (remainingEaters.length - 1))
-                    console.log(jump)
-                    groupMembers[i][jump] = remainingEaters[randomNum]
-                    remainingEaters.splice(randomNum, 1)
+                    for (i = 0; i < maxPeoplePerGroup - 1; i++) {
+                        generateRandom(remainingEaters, groupMembers)
+                    }
+
+                    allSubgroups.push(groupMembers)
+                    groupMembers = []
+
+                } else {     //Grupos con el núm máx de miembros posibles
+
+                    for (i = 0; i < maxPeoplePerGroup; i++) {
+                        generateRandom(remainingEaters, groupMembers)
+                    }
+
+                    allSubgroups.push(groupMembers)
+                    groupMembers = []
                 }
-                jump += (numberOfSubgroups - 1)
-
             }
-            // console.log(groupMembers)
 
-            // console.log(allEaters.length)
 
-            // console.log(groupMembers.length)
+            // ----- 1.3. Restaurants setting
+            let groupRestaurants = []
 
+            if (allRestaurants.length < numberOfSubgroups) {
+                throw res.status(500).json({ message: 'Not enough restaurants for creating all the groups.' })
+            }
+
+            for (i = 0; i < numberOfSubgroups; i++) {
+                generateRandom(remainingRestaurants, groupRestaurants)
+            }
+
+
+            // ----- 1.4. Role setting
+            let finalSubgroups = []
+
+            for (i = 0; i < numberOfSubgroups; i++) {
+                let randomNum = Math.floor(Math.random() * (groupRestaurants.length))
+
+                // ----- 1.4.1. Choose the leader
+
+                // let chooseLeader = notLeaderAgain(remainingRestaurants, i, allSubgroups)
+                // let subgroupSetting = { leader: chooseLeader }
+
+                let subgroupSetting = { leader: allSubgroups[i][randomNum] }
+                allSubgroups[i].splice(randomNum, 1)
+
+                // ----- 1.4.2. Create the structure of the group
+
+                subgroupSetting = { ...subgroupSetting, eaters: allSubgroups[i], restaurant: groupRestaurants[i] }
+                finalSubgroups.push(subgroupSetting)
+
+                subgroupSetting = []
+            }
+
+            return finalSubgroups
         })
-        // .then(finalSubgroups => {
+        .then(finalSubgroups => {
 
-        //     Subgroups.create(finalSubgroups)
-        //     Group.create({ subgroups: finalSubgroups })
+            Subgroups.create(finalSubgroups)
+            Group.create({ subgroups: finalSubgroups })
 
-        //     res.status(200).json(finalSubgroups)
-        // })
-        .catch(err => console.log(err))
-
-
+            return res.status(200).json(finalSubgroups)
+        })
+        .catch(err => res.status(500))
 })
+
+
+//  ----- 3. Remove all subgroups records - (just needed for testing)
+router.delete('/delete_groups', (req, res) => {
+
+    Subgroups
+        .remove()
+        .then(() => res.status(200).json({ message: 'subgroups deleted successfully' }))
+        .catch(err => res.status(500))
+})
+
 
 module.exports = router
